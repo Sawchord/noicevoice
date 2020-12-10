@@ -2,11 +2,11 @@ use num_complex::Complex32;
 use std::f32;
 use std::f32::consts::PI;
 
-pub fn real_fft<B: AsRef<[Complex32]>>(input: B) -> Result<Vec<Complex32>, ()> {
+pub fn fft<B: AsRef<[Complex32]>>(input: B) -> Result<Vec<Complex32>, ()> {
     fft_inner(input, false)
 }
 
-pub fn real_rfft<B: AsRef<[Complex32]>>(input: B) -> Result<Vec<Complex32>, ()> {
+pub fn rfft<B: AsRef<[Complex32]>>(input: B) -> Result<Vec<Complex32>, ()> {
     fft_inner(input, true)
 }
 
@@ -19,7 +19,7 @@ fn fft_inner<B: AsRef<[Complex32]>>(input: B, is_reverse: bool) -> Result<Vec<Co
     let mut output = vec![Complex32::new(0.0, 0.0); in_ref.len()];
 
     // Calculate omega
-    let omega = Complex32::new(PI / in_ref.len() as f32, 0.0).exp();
+    let omega = calc_omega(in_ref.len(), is_reverse);
 
     // Start the actual fft
     do_fft(&SplatAccessor::new(&input), &mut output, &omega, is_reverse);
@@ -45,7 +45,7 @@ fn do_fft(
     }
 
     // Calculate omega
-    let inner_omega = Complex32::new(PI / n as f32, 0.0).exp();
+    let inner_omega = calc_omega(n, is_reverse);
 
     // Inner call
     let (left, right) = input.splat();
@@ -62,6 +62,14 @@ fn do_fft(
 
         // Update omega for the next round
         omega_acc *= omega;
+    }
+}
+
+fn calc_omega(n: usize, is_reverse: bool) -> Complex32 {
+    if is_reverse {
+        Complex32::new(1.0 / n as f32, 0.0) * Complex32::new(-PI / n as f32, 0.0).exp()
+    } else {
+        Complex32::new(PI / n as f32, 0.0).exp()
     }
 }
 
@@ -111,6 +119,31 @@ impl<B> core::ops::Index<usize> for SplatAccessor<'_, B> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rand::Rng;
+
+    #[test]
+    fn fft_inversion() {
+        // Get random white noise
+        let mut rng = rand::thread_rng();
+        let mut test_input = [0; 8192];
+        rng.fill(&mut test_input[..]);
+
+        // Turn it a complex representation
+        let test_input = test_input
+            .iter()
+            .map(|x| x % (2 << 16))
+            .map(|x| x as f32 / (2 << 16) as f32)
+            .map(|x| Complex32::new(x, 0.0))
+            .collect::<Vec<_>>();
+
+        // Do fft
+        let fft_output = fft(&test_input).unwrap();
+        let rfft_output = rfft(fft_output).unwrap();
+
+        for (i, o) in test_input.iter().zip(rfft_output.iter()) {
+            assert_eq!(i, o);
+        }
+    }
 
     #[test]
     fn splat() {
