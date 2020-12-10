@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use num_complex::Complex32;
-use pitch::{fft, rfft};
+use pitch::fft::{fft, rfft};
 use rand::Rng;
 
 fn bench_fft(c: &mut Criterion) {
