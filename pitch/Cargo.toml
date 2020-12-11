@@ -8,7 +8,9 @@ edition = "2018"
 num-complex = "0.3.1"
 
 [dev-dependencies]
-soundio = "0.2.1"
+pasts = "0.6"
+wavy = "0.6.0"
+fon = "0.2"
 rand = "0.7.3"
 float-cmp = "0.8.0"
 criterion = "0.3.3"
@@ -16,3 +18,7 @@ criterion = "0.3.3"
 [[bench]]
 name = "benches"
 harness = false
+
+[[example]]
+name = "voice"
+path = "examples/voice.rs"

@@ -1,0 +1,42 @@
+{
+   "version": "0.2.0",
+   "configurations": [
+      {
+         "type": "lldb",
+         "request": "launch",
+         "name": "Debug unit tests in library 'pitch'",
+         "cargo": {
+            "args": [
+               "test",
+               "--no-run",
+               "--lib",
+               "--package=pitch"
+            ],
+            "filter": {
+               "name": "pitch",
+               "kind": "lib"
+            }
+         },
+         "args": [],
+         "cwd": "${workspaceFolder}"
+      },
+      {
+         "type": "lldb",
+         "request": "launch",
+         "name": "Debug example 'voice'",
+         "cargo": {
+            "args": [
+               "build",
+               "--example=voice",
+               "--package=pitch"
+            ],
+            "filter": {
+               "name": "voice",
+               "kind": "example"
+            }
+         },
+         "args": [],
+         "cwd": "${workspaceFolder}"
+      },
+   ]
+}

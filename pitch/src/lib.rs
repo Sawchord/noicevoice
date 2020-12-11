@@ -68,7 +68,7 @@ impl PitchShifter {
         self.pitch_shift = pitch;
     }
 
-    pub fn feed_audio(&mut self, audio: &mut [i16]) {
+    pub fn feed_audio(&mut self, audio: &[i16]) {
         // Add the new audio to the end of the buffer
         self.in_buf.extend_from_slice(audio);
 
@@ -189,21 +189,28 @@ impl PitchShifter {
             self.out_buf.extend_from_slice(&output[..]);
 
             // remove data from input
-            self.in_buf.drain(..audio.len());
+            self.in_buf.drain(..self.step_size);
         }
+    }
 
+    pub fn pull_audio(&mut self, num_samples: usize) -> Vec<i16> {
+        let mut output = vec![];
         // Copy audio from output buffer to the audio buffer
-        if audio.len() >= self.out_buf.len() {
+        if num_samples >= self.out_buf.len() {
             // If there is not enough data, we extend the buffer with 0 bytes
-            let bytes_left = self.out_buf.len();
-            audio[..bytes_left].copy_from_slice(&self.out_buf[..]);
-            audio[bytes_left..].iter_mut().for_each(|x| *x = 0);
+            let bytes_left = num_samples - self.out_buf.len();
+            output.extend_from_slice(&self.out_buf[..]);
+            for _ in 0..bytes_left {
+                output.push(0)
+            }
 
             // empty the buffer completely
             self.out_buf.clear();
         } else {
-            audio.copy_from_slice(&self.out_buf[..audio.len()]);
-            self.out_buf.drain(..audio.len());
+            output.extend_from_slice(&self.out_buf[..num_samples]);
+            self.out_buf.drain(..num_samples);
         }
+
+        output
     }
 }

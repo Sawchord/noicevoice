@@ -57,12 +57,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cc"
-version = "1.0.66"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c0496836a84f8d0495758516b8621a622beb77c0fed418570e50764093ced48"
-
-[[package]]
 name = "cfg-if"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -83,15 +77,6 @@ dependencies = [
  "bitflags",
  "textwrap",
  "unicode-width",
-]
-
-[[package]]
-name = "cmake"
-version = "0.1.45"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb6210b637171dfba4cda12e579ac6dc73f5165ad56133e5d72ef3131f320855"
-dependencies = [
- "cc",
 ]
 
 [[package]]
@@ -205,6 +190,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "dl_api"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e8752073dc1bae5debb147497c1f0e92abe69b7680c97411e99bf77390967a3"
+dependencies = [
+ "winapi",
+]
+
+[[package]]
 name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -218,6 +212,12 @@ checksum = "e1267f4ac4f343772758f7b1bdcbe767c218bbab93bb432acbf5162bbf85a6c4"
 dependencies = [
  "num-traits",
 ]
+
+[[package]]
+name = "fon"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5181d86281ce6f4cb944f2bb92690bb3097c144646ef37b96923c06d0f1607d4"
 
 [[package]]
 name = "getrandom"
@@ -282,17 +282,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1482821306169ec4d07f6aca392a4681f66c75c9918aa49641a2595db64053cb"
 
 [[package]]
-name = "libsoundio-sys"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2195f9ee34029c950787e2bdb014b6cd69bdff20f82e27b19170ca921d93a7f"
-dependencies = [
- "cc",
- "cmake",
- "pkg-config",
-]
-
-[[package]]
 name = "log"
 version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -351,21 +340,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ab1bc2a289d34bd04a330323ac98a1b4bc82c9d9fcb1e66b63caa84da26b575"
 
 [[package]]
+name = "pasts"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e5fe6441497bb11ec93d2f76320c41f799acb2275e5ce74f041f7e50f696e16a"
+
+[[package]]
 name = "pitch"
 version = "0.0.0"
 dependencies = [
  "criterion",
  "float-cmp",
+ "fon",
  "num-complex",
+ "pasts",
  "rand",
- "soundio",
+ "wavy",
 ]
-
-[[package]]
-name = "pkg-config"
-version = "0.3.19"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3831453b3449ceb48b6d9c7ad7c96d5ea673e9b470a1dc578c2ce6521230884c"
 
 [[package]]
 name = "plotters"
@@ -577,13 +568,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "soundio"
-version = "0.2.1"
+name = "smelling_salts"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "642a63d018a712067f22e19e407d6f6f08e1a436c156771e26171f076f8db24c"
-dependencies = [
- "libsoundio-sys",
-]
+checksum = "9f2692f084bca749bf1496cb442450bb4fd9ce511cceab14133416700ea42f34"
 
 [[package]]
 name = "syn"
@@ -697,6 +685,19 @@ name = "wasm-bindgen-shared"
 version = "0.2.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7e7811dd7f9398f14cc76efd356f98f03aa30419dea46aa810d71e819fc97158"
+
+[[package]]
+name = "wavy"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ffeb6be62fcdd8c775d93989d8b24f8c6a0745396bfbcf018207722d9f8ffa2"
+dependencies = [
+ "dl_api",
+ "fon",
+ "smelling_salts",
+ "wasm-bindgen",
+ "web-sys",
+]
 
 [[package]]
 name = "web-sys"
