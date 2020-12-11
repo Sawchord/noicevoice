@@ -1,8 +1,6 @@
 #![allow(dead_code)]
 
 // TODO: #1 Use Complex<T> instead of Complex32 in FFT
-// TODO: #2 Use Index<> instead AsRef<> constraint in SplatAccessor
-// TODO: #3 <-(#2) Use VecDequeue in Input and Output Buffer
 // TODO: #4 Fixed Size Frames using own Types
 // TODO: #5 Wavelet Type
 // TODO: #6 <- (#5) Factor out Frontend into Frequencer
@@ -15,6 +13,7 @@ pub(crate) mod splat;
 
 use core::f32::consts::PI;
 use num_complex::Complex32;
+use std::collections::VecDeque;
 
 use crate::fft::{fft, rfft};
 
@@ -31,9 +30,8 @@ pub struct PitchShifter {
     freqs_per_bin: f32,
     phase_diff_per_frame: f32,
     oversampling_rate: f32,
-    in_buf: Vec<i16>,
-    out_buf: Vec<i16>,
-    output_index: usize,
+    in_buf: VecDeque<i16>,
+    out_buf: VecDeque<i16>,
     in_phase_buf: Vec<f32>,
     out_phase_buf: Vec<f32>,
 }
@@ -56,9 +54,8 @@ impl PitchShifter {
             freqs_per_bin: sample_rate as f32 / frame_size as f32,
             phase_diff_per_frame: 2.0 * PI * step_size as f32 / frame_size as f32,
             oversampling_rate: frame_size as f32 / step_size as f32,
-            in_buf: vec![],
-            out_buf: vec![],
-            output_index: 0,
+            in_buf: VecDeque::new(),
+            out_buf: VecDeque::new(),
             in_phase_buf: vec![0.0; frame_size],
             out_phase_buf: vec![0.0; frame_size],
         })
@@ -70,13 +67,15 @@ impl PitchShifter {
 
     pub fn feed_audio(&mut self, audio: &[i16]) {
         // Add the new audio to the end of the buffer
-        self.in_buf.extend_from_slice(audio);
+        self.in_buf.extend(audio.iter());
 
         // if we have enough audio, process data
         if self.in_buf.len() >= self.frame_size {
             // normalize, apply windowing function and make comples
-            let frame = self.in_buf[..self.frame_size]
+            let frame = self
+                .in_buf
                 .iter()
+                .take(self.frame_size)
                 // normalize
                 //.map(|x| *x as f32 / (2 << 15) as f32)
                 .map(|x| *x as f32)
@@ -110,14 +109,21 @@ impl PitchShifter {
                     phase_diff -=
                         k as f32 * 2.0 * PI * (self.step_size as f32 / self.frame_size as f32);
 
+                    let n = (f32::abs(phase_diff) / PI) as usize;
+
                     // map back onto rad
-                    if phase_diff > PI {
-                        phase_diff -= PI;
+                    if phase_diff > 0.0 {
+                        phase_diff -= n as f32 * PI;
+                        if phase_diff > PI {
+                            phase_diff = PI;
+                        }
+                    } else {
+                        phase_diff += n as f32 * PI;
+                        if phase_diff < -PI {
+                            phase_diff = -PI;
+                        }
                     }
-                    if phase_diff < -PI {
-                        phase_diff += PI;
-                    }
-                    debug_assert!(phase_diff < PI && phase_diff > -PI);
+                    assert!(phase_diff <= PI && phase_diff >= -PI);
 
                     // compute frequency deviation
                     let freq_dev = self.oversampling_rate * phase_diff / (2.0 * PI);
@@ -186,7 +192,7 @@ impl PitchShifter {
                 .collect::<Vec<_>>();
 
             // add new output to buffer
-            self.out_buf.extend_from_slice(&output[..]);
+            self.out_buf.extend(output.iter());
 
             // remove data from input
             self.in_buf.drain(..self.step_size);
@@ -199,7 +205,7 @@ impl PitchShifter {
         if num_samples >= self.out_buf.len() {
             // If there is not enough data, we extend the buffer with 0 bytes
             let bytes_left = num_samples - self.out_buf.len();
-            output.extend_from_slice(&self.out_buf[..]);
+            output.extend(self.out_buf.iter());
             for _ in 0..bytes_left {
                 output.push(0)
             }
@@ -207,7 +213,7 @@ impl PitchShifter {
             // empty the buffer completely
             self.out_buf.clear();
         } else {
-            output.extend_from_slice(&self.out_buf[..num_samples]);
+            output.extend(self.out_buf.iter().take(num_samples));
             self.out_buf.drain(..num_samples);
         }
 

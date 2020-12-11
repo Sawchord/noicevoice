@@ -6,6 +6,7 @@ use fon::{
 };
 use pasts::prelude::*;
 use std::cell::RefCell;
+//use twang::Synth;
 use wavy::{Microphone, MicrophoneId, SpeakerId};
 
 use pitch::PitchShifter;
@@ -23,13 +24,10 @@ async fn microphone_task(state: &RefCell<State>, mut mic: Microphone<Ch16>) {
 
    loop {
       let mut sample = mic.record().await;
-      match sample.stream_sample() {
-         Some(stream) => {
-            let chan = stream.channels()[0];
-            buffer.push(i16::from(chan));
-         }
-         None => continue,
-      };
+      while let Some(stream) = sample.stream_sample() {
+         let chan = stream.channels()[0];
+         buffer.push(i16::from(chan));
+      }
 
       let mut state = state.borrow_mut();
       state.pitch.feed_audio(&buffer);
@@ -62,10 +60,7 @@ async fn start() {
 
    let pitch = PitchShifter::new(microphone.sample_rate() as usize, 4096, 1024).unwrap();
 
-   let state = RefCell::new(State {
-      //buffer: Audio::with_silence(microphone.sample_rate(), 0),
-      pitch,
-   });
+   let state = RefCell::new(State { pitch });
    // Create speaker and microphone tasks.
    task! {
        let speakers = speakers_task(&state);

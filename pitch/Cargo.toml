@@ -8,6 +8,7 @@ edition = "2018"
 num-complex = "0.3.1"
 
 [dev-dependencies]
+twang = "0.4.0"
 pasts = "0.6"
 wavy = "0.6.0"
 fon = "0.2"
