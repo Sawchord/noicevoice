@@ -65,7 +65,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
    let mut chart = ChartBuilder::on(&root)
       .x_label_area_size(30)
       .y_label_area_size(30)
-      .build_cartesian_2d(0f32..48_000f32, 0f32..6f32)?;
+      .build_cartesian_2d(0f32..24_000f32, 0f32..6f32)?;
 
    chart.configure_mesh().draw()?;
 

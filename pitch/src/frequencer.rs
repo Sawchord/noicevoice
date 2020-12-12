@@ -85,6 +85,8 @@ impl Frequencer {
       // transform
       let bins = fft
          .iter()
+         // FFT is symetric, therefore we only need lower half
+         .take(self.frame_size / 2)
          // transform into polar
          // now r is amplitutde and theta is phase
          .map(|x| x.to_polar())
@@ -186,29 +188,15 @@ mod tests {
       let mut synth = Synth::new();
       synth.gen(sink.clone(), |fc| fc.freq(1000.0).sine());
 
-      let freq = sink
+      let base_freq = sink
          .0
          .borrow()
          .current_wavelet
          .as_ref()
          .unwrap()
-         .bins
-         .iter()
-         .filter(|x| x.amplitude > 2.0)
-         .map(|x| x.clone())
-         .collect::<Vec<_>>();
+         .base_freq();
 
-      dbg!(freq);
-      println!(
-         "measured frequency {}",
-         sink
-            .0
-            .borrow()
-            .current_wavelet
-            .as_ref()
-            .unwrap()
-            .base_freq()
-      );
-      panic!()
+      dbg!(&base_freq);
+      assert!(base_freq >= 995.0 && base_freq <= 1005.0);
    }
 }
