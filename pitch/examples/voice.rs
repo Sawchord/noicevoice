@@ -1,5 +1,5 @@
 use fon::{
-   chan::Ch16,
+   chan::{Ch16, Channel},
    mono::Mono16,
    sample::{Sample, Sample1},
    Sink, Stream,
@@ -14,7 +14,6 @@ use pitch::PitchShifter;
 /// The program's shared state.
 struct State {
    /// Temporary buffer for holding real-time audio samples.
-   //buffer: Audio<Mono16>,
    pitch: PitchShifter,
 }
 
@@ -26,7 +25,7 @@ async fn microphone_task(state: &RefCell<State>, mut mic: Microphone<Ch16>) {
       let mut sample = mic.record().await;
       while let Some(stream) = sample.stream_sample() {
          let chan = stream.channels()[0];
-         buffer.push(i16::from(chan));
+         buffer.push(chan.to_f64() as f32);
       }
 
       let mut state = state.borrow_mut();
@@ -42,10 +41,10 @@ async fn speakers_task(state: &RefCell<State>) {
    loop {
       let mut sink = speakers.play().await;
       let mut state = state.borrow_mut();
-      let output = state.pitch.pull_audio(1);
+      let output = state.pitch.pull_audio(128);
 
       for s in output {
-         sink.sink_sample(Sample1::new::<Ch16>(s.into()));
+         sink.sink_sample(Sample1::new::<Ch16>((s as f64).into()));
       }
    }
 }

@@ -13,7 +13,7 @@ pub(crate) mod splat;
 
 use core::f32::consts::PI;
 use num_complex::Complex32;
-use std::collections::VecDeque;
+use std::{collections::VecDeque, iter::FromIterator};
 
 use crate::fft::{fft, rfft};
 
@@ -21,6 +21,22 @@ pub struct FrequencyBin {
     amplitude: f32,
     frequency: f32,
 }
+
+// pub struct Wavelet {
+//     frame_size: usize,
+//     bins: Vec<FrequencyBin>,
+// }
+
+// pub struct Frequencer {
+//     sample_rate: usize,
+//     frame_size: usize,
+//     step_size: usize,
+//     freqs_per_bin: f32,
+//     phase_diff_per_frame: f32,
+//     oversampling_rate: f32,
+//     expected_phase: f32,
+//     phase_buf: Vec<f32>,
+// }
 
 pub struct PitchShifter {
     sample_rate: usize,
@@ -30,8 +46,8 @@ pub struct PitchShifter {
     freqs_per_bin: f32,
     phase_diff_per_frame: f32,
     oversampling_rate: f32,
-    in_buf: VecDeque<i16>,
-    out_buf: VecDeque<i16>,
+    in_buf: VecDeque<f32>,
+    out_buf: VecDeque<f32>,
     in_phase_buf: Vec<f32>,
     out_phase_buf: Vec<f32>,
 }
@@ -55,7 +71,8 @@ impl PitchShifter {
             phase_diff_per_frame: 2.0 * PI * step_size as f32 / frame_size as f32,
             oversampling_rate: frame_size as f32 / step_size as f32,
             in_buf: VecDeque::new(),
-            out_buf: VecDeque::new(),
+            //out_buf: VecDeque::new(),
+            out_buf: VecDeque::from_iter(std::iter::repeat(0.0).take(frame_size)),
             in_phase_buf: vec![0.0; frame_size],
             out_phase_buf: vec![0.0; frame_size],
         })
@@ -65,7 +82,12 @@ impl PitchShifter {
         self.pitch_shift = pitch;
     }
 
-    pub fn feed_audio(&mut self, audio: &[i16]) {
+    pub fn feed_audio(&mut self, audio: &[f32]) {
+        // We are making local copies so we don't have to worry about ownership
+        let buf_len = self.out_buf.len();
+        let frame_size = self.frame_size;
+        let oversampling_rate = self.oversampling_rate;
+
         // Add the new audio to the end of the buffer
         self.in_buf.extend(audio.iter());
 
@@ -76,9 +98,6 @@ impl PitchShifter {
                 .in_buf
                 .iter()
                 .take(self.frame_size)
-                // normalize
-                //.map(|x| *x as f32 / (2 << 15) as f32)
-                .map(|x| *x as f32)
                 // apply windowing
                 .enumerate()
                 .map(|(k, x)| {
@@ -179,27 +198,31 @@ impl PitchShifter {
             let output = rfft(&output).unwrap();
 
             // apply window and turn into real numbers
-            let output = output
-                .iter()
-                .enumerate()
-                .map(|(k, x)| {
-                    let window =
-                        -0.5 * f32::cos(2.0 * PI * k as f32 / self.frame_size as f32) + 0.5;
-                    2.0 * window * x.im * (self.frame_size as f32 / self.oversampling_rate as f32)
-                })
-                // quantize
-                .map(|x| x as i16)
-                .collect::<Vec<_>>();
 
-            // add new output to buffer
-            self.out_buf.extend(output.iter());
+            let output = output.iter().enumerate().map(|(k, x)| {
+                let window = -0.5 * f32::cos(2.0 * PI * k as f32 / frame_size as f32) + 0.5;
+                2.0 * window * x.im * (frame_size as f32 / oversampling_rate as f32)
+                //2.0 * window * x.im
+            });
+
+            // extend buffer by stepsize elements
+            self.out_buf
+                .extend(std::iter::repeat(0.0).take(self.step_size));
+
+            // accumulate output to buffer
+            self.out_buf
+                .iter_mut()
+                .skip((buf_len - frame_size) + frame_size)
+                .zip(output)
+                .for_each(|(x, y)| *x += y);
 
             // remove data from input
             self.in_buf.drain(..self.step_size);
         }
     }
 
-    pub fn pull_audio(&mut self, num_samples: usize) -> Vec<i16> {
+    pub fn pull_audio(&mut self, num_samples: usize) -> Vec<f32> {
+        // TODO: Output on correct boundaries
         let mut output = vec![];
         // Copy audio from output buffer to the audio buffer
         if num_samples >= self.out_buf.len() {
@@ -207,7 +230,7 @@ impl PitchShifter {
             let bytes_left = num_samples - self.out_buf.len();
             output.extend(self.out_buf.iter());
             for _ in 0..bytes_left {
-                output.push(0)
+                output.push(0.0)
             }
 
             // empty the buffer completely
