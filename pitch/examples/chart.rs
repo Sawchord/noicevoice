@@ -55,21 +55,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
       buf: vec![],
       current_wavelet: None,
       capacity: (1 << 16),
-      freq: Frequencer::new(48000, 2048, 256).unwrap(),
-      resynth: Resynth::new(48000, 2048, 256).unwrap(),
+      freq: Frequencer::new(48000, 4096, 1024).unwrap(),
+      resynth: Resynth::new(48000, 4096, 1024).unwrap(),
       original: vec![],
       output: vec![],
    })));
 
    // Generate synth
    let mut synth = Synth::new();
-   synth.gen(sink.clone(), |fc| fc.freq(1500.0).sine());
+   synth.gen(sink.clone(), |fc| fc.freq(1000.0).sine());
 
    let sink = sink.0.borrow();
-   let bins = sink.current_wavelet.as_ref().unwrap().clone();
+   let mut bins = sink.current_wavelet.as_ref().unwrap().clone();
+   bins.pitch_shift(1.4);
    let freq = bins
       .bins
       .iter()
+      .filter(|x| x.amplitude != 0.0)
       .map(|x| (x.frequency as f32, x.amplitude as f32));
 
    let waves = sink

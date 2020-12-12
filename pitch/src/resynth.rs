@@ -68,7 +68,8 @@ impl Resynth {
          .enumerate()
          .map(|(k, bin)| {
             // calculate frequency deviation from frequency
-            let freq_dev = bin.frequency / self.freqs_per_bin - k as f64;
+            let mut freq_dev = bin.frequency - k as f64 * self.freqs_per_bin;
+            freq_dev = freq_dev / self.freqs_per_bin;
 
             // calculate phase difference from frequency deviation
             let mut phase_diff = 2.0 * PI * freq_dev / self.oversampling_rate;
@@ -85,6 +86,7 @@ impl Resynth {
          // turn back into complex numbers
          .map(|(amp, phase)| Complex64::from_polar(amp, phase))
          // remove the imaginary part
+         //.map(|x| Complex64::new(x.re, 0.0))
          .collect::<Vec<_>>();
 
       // reverse fft

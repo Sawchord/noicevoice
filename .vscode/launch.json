@@ -38,5 +38,23 @@
          "args": [],
          "cwd": "${workspaceFolder}"
       },
+      {
+         "type": "lldb",
+         "request": "launch",
+         "name": "Debug example 'chart'",
+         "cargo": {
+            "args": [
+               "build",
+               "--example=chart",
+               "--package=pitch"
+            ],
+            "filter": {
+               "name": "chart",
+               "kind": "example"
+            }
+         },
+         "args": [],
+         "cwd": "${workspaceFolder}"
+      },
    ]
 }

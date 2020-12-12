@@ -35,7 +35,10 @@ async fn microphone_task(state: &RefCell<State>, mut mic: Microphone<Ch16>) {
          // If there is enough data in the buffer we process it into a wavelet
          if buffer.len() >= step_size {
             let mut state = state.borrow_mut();
-            let wv = state.freq.feed_audio(&buffer[..]);
+            let mut wv = state.freq.feed_audio(&buffer[..]);
+
+            wv.pitch_shift(1.0 / 1.6);
+
             state.wavelets.push_back(wv);
             buffer.clear();
          }
@@ -54,6 +57,7 @@ async fn speakers_task(state: &RefCell<State>) {
 
       // get the new wavelet if we have one
       let wv = state.wavelets.pop_front();
+      println!("stored {} wavelets", state.wavelets.len());
 
       // allocate new output
       let mut output = vec![0.0f64; state.resynth.step_size()];

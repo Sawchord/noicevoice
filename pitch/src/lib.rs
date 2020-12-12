@@ -1,6 +1,4 @@
 // TODO: #4 Fixed Size Frames using own Types
-// TODO: #7 <- (#5) Factor Resynth into Wavelet
-// TODO: #8 <- (#6, #7, #4) Factor out input and output buffer
 // TODO: #9 <- (#5) Custom algs
 
 pub mod fft;
@@ -45,6 +43,30 @@ impl Wavelet {
             }
         }
         max_freq
+        //let max = self.bins.iter().max();
+    }
+
+    pub fn pitch_shift(&mut self, pitch_shift: f64) {
+        let bins = &self.bins;
+
+        // Create empty bins
+        let mut new_bins = std::iter::repeat(FrequencyBin {
+            amplitude: 0.0,
+            frequency: 0.0,
+        })
+        .take(bins.len())
+        .collect::<Vec<_>>();
+
+        for k in 0..bins.len() {
+            let index = ((k as f64) * pitch_shift) as usize;
+
+            if index < new_bins.len() {
+                new_bins[index].amplitude += bins[k].amplitude;
+                new_bins[index].frequency = bins[k].frequency * pitch_shift
+            }
+        }
+
+        self.bins = new_bins;
     }
 }
 
