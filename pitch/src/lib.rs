@@ -22,21 +22,21 @@ pub struct FrequencyBin {
     frequency: f32,
 }
 
-// pub struct Wavelet {
-//     frame_size: usize,
-//     bins: Vec<FrequencyBin>,
-// }
+pub struct Wavelet {
+    frame_size: usize,
+    bins: Vec<FrequencyBin>,
+}
 
-// pub struct Frequencer {
-//     sample_rate: usize,
-//     frame_size: usize,
-//     step_size: usize,
-//     freqs_per_bin: f32,
-//     phase_diff_per_frame: f32,
-//     oversampling_rate: f32,
-//     expected_phase: f32,
-//     phase_buf: Vec<f32>,
-// }
+pub struct Frequencer {
+    sample_rate: usize,
+    frame_size: usize,
+    step_size: usize,
+    freqs_per_bin: f32,
+    phase_diff_per_frame: f32,
+    oversampling_rate: f32,
+    expected_phase: f32,
+    phase_buf: Vec<f32>,
+}
 
 pub struct PitchShifter {
     sample_rate: usize,
@@ -70,8 +70,7 @@ impl PitchShifter {
             freqs_per_bin: sample_rate as f32 / frame_size as f32,
             phase_diff_per_frame: 2.0 * PI * step_size as f32 / frame_size as f32,
             oversampling_rate: frame_size as f32 / step_size as f32,
-            in_buf: VecDeque::new(),
-            //out_buf: VecDeque::new(),
+            in_buf: VecDeque::from_iter(std::iter::repeat(0.0).take(frame_size)),
             out_buf: VecDeque::from_iter(std::iter::repeat(0.0).take(frame_size)),
             in_phase_buf: vec![0.0; frame_size],
             out_phase_buf: vec![0.0; frame_size],
@@ -198,7 +197,6 @@ impl PitchShifter {
             let output = rfft(&output).unwrap();
 
             // apply window and turn into real numbers
-
             let output = output.iter().enumerate().map(|(k, x)| {
                 let window = -0.5 * f32::cos(2.0 * PI * k as f32 / frame_size as f32) + 0.5;
                 2.0 * window * x.im * (frame_size as f32 / oversampling_rate as f32)
@@ -221,25 +219,19 @@ impl PitchShifter {
         }
     }
 
-    pub fn pull_audio(&mut self, num_samples: usize) -> Vec<f32> {
-        // TODO: Output on correct boundaries
-        let mut output = vec![];
-        // Copy audio from output buffer to the audio buffer
-        if num_samples >= self.out_buf.len() {
-            // If there is not enough data, we extend the buffer with 0 bytes
-            let bytes_left = num_samples - self.out_buf.len();
-            output.extend(self.out_buf.iter());
-            for _ in 0..bytes_left {
-                output.push(0.0)
-            }
+    pub fn pull_audio(&mut self, output: &mut [f32]) -> usize {
+        // We can only output bytes that are outside of the frame
+        // because they are permanent.
+        let bytes_left = self.out_buf.len().saturating_sub(self.frame_size);
+        // Calculate, how many bytes we need to output
+        let num_samples = usize::min(bytes_left, output.len());
 
-            // empty the buffer completely
-            self.out_buf.clear();
-        } else {
-            output.extend(self.out_buf.iter().take(num_samples));
-            self.out_buf.drain(..num_samples);
-        }
-
+        // Fill the output with samples from the buffer
         output
+            .iter_mut()
+            .zip(self.out_buf.drain(..num_samples))
+            .for_each(|(x, y)| *x = y);
+
+        num_samples
     }
 }

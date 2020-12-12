@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+
 use fon::{
    chan::{Ch16, Channel},
    mono::Mono16,
@@ -39,12 +41,14 @@ async fn speakers_task(state: &RefCell<State>) {
    let mut speakers = SpeakerId::default().connect::<Mono16>().unwrap();
 
    loop {
+      let mut output: [f32; 128] = [0.0; 128];
+
       let mut sink = speakers.play().await;
       let mut state = state.borrow_mut();
-      let output = state.pitch.pull_audio(128);
+      let _num_bytes = state.pitch.pull_audio(&mut output);
 
-      for s in output {
-         sink.sink_sample(Sample1::new::<Ch16>((s as f64).into()));
+      for s in output.iter() {
+         sink.sink_sample(Sample1::new::<Ch16>((*s as f64).into()));
       }
    }
 }
@@ -57,7 +61,8 @@ async fn start() {
       microphone.sample_rate()
    );
 
-   let pitch = PitchShifter::new(microphone.sample_rate() as usize, 4096, 1024).unwrap();
+   let mut pitch = PitchShifter::new(microphone.sample_rate() as usize, 4096, 512).unwrap();
+   pitch.set_pitch_shift(1.0);
 
    let state = RefCell::new(State { pitch });
    // Create speaker and microphone tasks.
