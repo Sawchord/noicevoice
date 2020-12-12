@@ -19,8 +19,8 @@ use std::{collections::VecDeque, iter::FromIterator};
 
 #[derive(Debug, Clone)]
 pub struct FrequencyBin {
-    amplitude: f64,
-    frequency: f64,
+    pub amplitude: f64,
+    pub frequency: f64,
 }
 
 #[derive(Debug, Clone)]
