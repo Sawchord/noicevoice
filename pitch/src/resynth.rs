@@ -85,7 +85,6 @@ impl Resynth {
          // turn back into complex numbers
          .map(|(amp, phase)| Complex64::from_polar(amp, phase))
          // remove the imaginary part
-         //.map(|x| Complex64::new(x.re, 0.0))
          .collect::<Vec<_>>();
 
       // reverse fft
@@ -93,15 +92,23 @@ impl Resynth {
       // Extend the frame with 0s
       // FIXME: Maybe instead mirror the values?
       frame.extend(std::iter::repeat(Complex64::zero()).take(self.frame_size / 2));
+
+      //let mut frame2 = frame.clone();
+      //frame2.extend(frame.iter().rev());
+      //frame2.extend(std::iter::repeat(Complex64::zero()).take(self.frame_size / 2));
+
       use rustfft::num_traits::Zero;
       let mut ifft = vec![Complex64::zero(); self.frame_size];
       self.ifft.process(&mut frame, &mut ifft);
 
       // apply window and turn into real numbers
       let frame_size = self.frame_size;
+      let oversampling_rate = self.oversampling_rate;
       let output = ifft.iter().enumerate().map(|(k, x)| {
          let window = -0.5 * f64::cos(2.0 * PI * k as f64 / frame_size as f64) + 0.5;
-         2.0 * window * x.re
+         2.0 * window * x.re / ((frame_size / 2) as f64 * oversampling_rate)
+         //2.0 * window * x.re / (frame_size / 2) as f64
+         //window * x.re
       });
 
       // drain buffer into audio output
@@ -121,5 +128,7 @@ impl Resynth {
          .iter_mut()
          .zip(output)
          .for_each(|(x, y)| *x += y);
+
+      debug_assert_eq!(self.sample_buf.len(), self.frame_size);
    }
 }

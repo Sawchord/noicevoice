@@ -3,16 +3,19 @@ use fon::{
    sample::{Sample, Sample1},
    Sink,
 };
-use pitch::{Frequencer, Wavelet};
+use pitch::{Frequencer, Resynth, Wavelet};
 use plotters::prelude::*;
 use std::{cell::RefCell, rc::Rc};
 use twang::Synth;
 
 struct FreqSinkInner {
    buf: Vec<f64>,
-   freq: Frequencer,
    current_wavelet: Option<Wavelet>,
    capacity: usize,
+   freq: Frequencer,
+   resynth: Resynth,
+   original: Vec<f64>,
+   output: Vec<f64>,
 }
 
 #[derive(Clone)]
@@ -25,13 +28,20 @@ impl Sink<Sample1<Ch64>> for FreqSink {
 
    fn sink_sample(&mut self, sample: Sample1<Ch64>) {
       let mut cell = self.0.borrow_mut();
+      cell.original.push(sample.channels()[0].to_f64());
       cell.buf.push(sample.channels()[0].to_f64());
       cell.capacity -= 1;
 
       if cell.buf.len() == cell.freq.step_size() {
+         // feed audio and clear buffer
          let buf = cell.buf.clone();
          let wv = cell.freq.feed_audio(&buf);
-         cell.current_wavelet = Some(wv);
+         cell.buf.clear();
+
+         cell.current_wavelet = Some(wv.clone());
+         let mut audio = vec![0.0; cell.resynth.step_size()];
+         cell.resynth.pull_audio(&mut audio, Some(wv));
+         cell.output.extend_from_slice(&audio);
       }
    }
 
@@ -43,38 +53,57 @@ impl Sink<Sample1<Ch64>> for FreqSink {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
    let sink = FreqSink(Rc::new(RefCell::new(FreqSinkInner {
       buf: vec![],
-      freq: Frequencer::new(48000, 2048, 256).unwrap(),
       current_wavelet: None,
       capacity: (1 << 16),
+      freq: Frequencer::new(48000, 2048, 256).unwrap(),
+      resynth: Resynth::new(48000, 2048, 256).unwrap(),
+      original: vec![],
+      output: vec![],
    })));
 
    // Generate synth
    let mut synth = Synth::new();
-   synth.gen(sink.clone(), |fc| fc.freq(5000.0).sine());
+   synth.gen(sink.clone(), |fc| fc.freq(1500.0).sine());
 
-   let bins = sink.0.borrow().current_wavelet.as_ref().unwrap().clone();
+   let sink = sink.0.borrow();
+   let bins = sink.current_wavelet.as_ref().unwrap().clone();
    let freq = bins
       .bins
       .iter()
       .map(|x| (x.frequency as f32, x.amplitude as f32));
-   //.collect::<Vec<_>>();
 
-   // plot the results
-   let root = BitMapBackend::new("test.png", (640, 480)).into_drawing_area();
+   let waves = sink
+      .output
+      .iter()
+      .enumerate()
+      .map(|(x, y)| (x as f32, *y as f32));
+
+   let original = sink
+      .original
+      .iter()
+      .enumerate()
+      .map(|(x, y)| (x as f32, *y as f32));
+
+   let root = SVGBackend::new("freq.svg", (1024, 768)).into_drawing_area();
    root.fill(&WHITE)?;
-   let mut chart = ChartBuilder::on(&root)
+   let (upper, lower) = root.split_vertically(512);
+
+   let mut freq_chart = ChartBuilder::on(&upper)
       .x_label_area_size(30)
       .y_label_area_size(30)
-      .build_cartesian_2d(0f32..24_000f32, 0f32..6f32)?;
+      .build_cartesian_2d(0f32..24_000f32, 0f32..10f32)?;
 
-   chart.configure_mesh().draw()?;
+   freq_chart.configure_mesh().draw()?;
+   freq_chart.draw_series(LineSeries::new(freq, &RED))?;
 
-   chart.draw_series(LineSeries::new(freq, &RED))?;
+   let mut wave_chart = ChartBuilder::on(&lower)
+      .x_label_area_size(30)
+      .y_label_area_size(30)
+      .build_cartesian_2d(10000f32..12400f32, -2f32..2f32)?;
 
-   // chart.draw_series(LineSeries::new(
-   //    (-50..=50).map(|x| x as f32 / 50.0).map(|x| (x, x * x)),
-   //    &RED,
-   // ))?;
+   wave_chart.configure_mesh().draw()?;
+   wave_chart.draw_series(LineSeries::new(waves, &RED))?;
+   wave_chart.draw_series(LineSeries::new(original, &BLUE))?;
 
    Ok(())
 }
