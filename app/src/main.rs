@@ -101,8 +101,8 @@ impl Component for Model {
 impl Model {
     fn slider(&self, id: &str, name: &str, step: &str, min: &str, max: &str) -> Html {
         html! {
-            <div class="columns level">
-                <p class="column level-item is-one-fifths">
+            <div class="columns level is-mobile">
+                <p class="column level-item is-one-fifths is-hidden-mobile">
                     {name}
                 </p>
                 <input
