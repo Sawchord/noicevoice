@@ -11,7 +11,6 @@ use std::{cell::RefCell, collections::VecDeque};
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::future_to_promise;
 use wavy::{Microphone, MicrophoneId, SpeakerId};
-//use web_sys::{Document, HtmlInputElement, Window};
 
 static RUNNING: AtomicBool = AtomicBool::new(false);
 
@@ -26,9 +25,15 @@ async fn microphone_task(state: &RefCell<State>, mut mic: Microphone<Ch16>) {
    let mut buffer = vec![];
 
    loop {
-      // TODO: Stop
       let mut sample = mic.record().await;
       let step_size = state.borrow().freq.step_size();
+
+      // Stop the frequencer
+      if !RUNNING.load(Ordering::Relaxed) {
+         // Pull out the empty data
+         while let Some(_) = sample.stream_sample() {}
+         continue;
+      }
 
       while let Some(stream) = sample.stream_sample() {
          let chan = stream.channels()[0];
@@ -38,21 +43,17 @@ async fn microphone_task(state: &RefCell<State>, mut mic: Microphone<Ch16>) {
          if buffer.len() >= step_size {
             let mut state = state.borrow_mut();
 
-            if state.wavelets.len() <= 5 {
+            if state.wavelets.len() <= 1000 {
                let mut wv = state.freq.feed_audio(&buffer[..]);
 
-               // TODO: Implement pitch shift slider
-               wv.pitch_shift(1.0);
+               // Get the pitch shift
+               let pitch = get_slider_value("pitch").unwrap_or(1.0);
+               wv.pitch_shift(pitch);
 
                state.wavelets.push_back(wv);
             }
             buffer.clear();
          }
-      }
-
-      // Stop the frequencer
-      if !RUNNING.load(Ordering::Relaxed) {
-         break;
       }
    }
 }
@@ -65,12 +66,13 @@ async fn speakers_task(state: &RefCell<State>) {
    loop {
       // wait for request
       let mut sink = speakers.play().await;
+
       let mut state = state.borrow_mut();
 
       // get the new wavelet if we have one
       let wv = state.wavelets.pop_front();
 
-      if state.wavelets.len() <= 5 {
+      if state.wavelets.len() <= 10 {
          // allocate new output
          let mut output = vec![0.0f64; state.resynth.step_size()];
 
@@ -79,16 +81,12 @@ async fn speakers_task(state: &RefCell<State>) {
 
          // Get the gain factor
 
-         // 1.0242687596005495 audio factor
+         let volume = get_slider_value("volume").unwrap_or(50.0);
+         let gain = 1.0242687596005495f64.powf(volume) - 1.0;
          for s in output.iter() {
             // TODO: Implement volume
-            sink.sink_sample(Sample1::new::<Ch16>((*s as f64).into()));
+            sink.sink_sample(Sample1::new::<Ch16>((*s * gain).into()));
          }
-      }
-
-      // Stop the frequencer
-      if !RUNNING.load(Ordering::Relaxed) {
-         break;
       }
    }
 }
@@ -116,9 +114,7 @@ async fn start() {
    poll![speakers, microphone].await;
 }
 
-pub fn start_frequencer() {
-   RUNNING.store(true, Ordering::Relaxed);
-
+pub fn init_frequencer() {
    let promise = async move {
       start().await;
       Ok(JsValue::null())
@@ -126,6 +122,25 @@ pub fn start_frequencer() {
    let _ = future_to_promise(promise);
 }
 
+pub fn start_frequencer() {
+   RUNNING.store(true, Ordering::Relaxed);
+}
+
 pub fn stop_frequencer() {
    RUNNING.store(false, Ordering::Relaxed);
+}
+
+fn get_slider_value<T>(name: &str) -> Option<T>
+where
+   T: core::str::FromStr,
+{
+   use wasm_bindgen::JsCast;
+   let val = web_sys::window()?
+      .document()?
+      .get_element_by_id(name)?
+      .dyn_into::<web_sys::HtmlInputElement>()
+      .ok()?
+      .value();
+
+   val.parse().ok()
 }

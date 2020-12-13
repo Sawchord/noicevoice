@@ -24,6 +24,7 @@ impl Component for Model {
     type Properties = ();
 
     fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        voice::init_frequencer();
         Self {
             link,
             state: State::Idle,
@@ -88,8 +89,8 @@ impl Component for Model {
                     </section>
 
                     <div class="card-content">
-                        {self.slider("volume", "Volume", "1", "0", "100", "50")}
-                        {self.slider("pitch", "Pitch", "0.01", "0.5", "2.0", "1.0")}
+                        {self.slider("volume", "Volume", "1", "0", "100")}
+                        {self.slider("pitch", "Pitch", "0.01", "0.5", "2.0")}
                     </div>
                 </div>
             </div>
@@ -98,7 +99,7 @@ impl Component for Model {
 }
 
 impl Model {
-    fn slider(&self, id: &str, name: &str, step: &str, min: &str, max: &str, value: &str) -> Html {
+    fn slider(&self, id: &str, name: &str, step: &str, min: &str, max: &str) -> Html {
         html! {
             <div class="columns level">
                 <p class="column level-item is-one-fifths">
@@ -110,7 +111,6 @@ impl Model {
                     step=step
                     min=min
                     max=max
-                    value=value
                     type="range"
                 />
             </div>
