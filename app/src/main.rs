@@ -1,12 +1,22 @@
 #![recursion_limit = "256"]
 
+mod voice;
+
 use yew::prelude::*;
 
-enum Msg {}
+enum State {
+    Idle,
+    Playing,
+}
+
+enum Msg {
+    PlayButtonPress,
+}
 
 #[allow(dead_code)]
 struct Model {
     link: ComponentLink<Self>,
+    state: State,
 }
 
 impl Component for Model {
@@ -14,11 +24,31 @@ impl Component for Model {
     type Properties = ();
 
     fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
-        Self { link }
+        Self {
+            link,
+            state: State::Idle,
+        }
     }
 
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        todo!()
+    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        #[allow(unreachable_patterns)]
+        match msg {
+            Msg::PlayButtonPress => {
+                match self.state {
+                    State::Idle => {
+                        voice::start_frequencer();
+                        self.state = State::Playing;
+                    }
+                    State::Playing => {
+                        voice::stop_frequencer();
+                        self.state = State::Idle;
+                    }
+                    _ => (),
+                }
+                true
+            }
+            _ => false,
+        }
     }
 
     fn change(&mut self, _: Self::Properties) -> ShouldRender {
@@ -26,6 +56,12 @@ impl Component for Model {
     }
 
     fn view(&self) -> Html {
+        let (btn_color, btn_icon) = if self.is_playing() {
+            ("is-danger", "fa-stop-circle")
+        } else {
+            ("is-success", "fa-play-circle")
+        };
+
         html! {
             <div class="container">
                 <div class="card">
@@ -33,42 +69,58 @@ impl Component for Model {
                         <div class="hero-body columns">
                             <div class="container column">
                             <h1 class="title">
-                                {{"NoiseVoice"}}
+                                {"NoiseVoice"}
                             </h1>
                             <h2 class="subtitle">
-                                {{"Experiments involving Rust + WASM/Yew + Audioprocessing"}}
+                                {"Experiments involving Rust + WASM/Yew + Audioprocessing"}
                             </h2>
                             </div>
                             <button
                                 id="play"
-                                class="button column mx-4 is-large is-primary mt-6"
+                                class=("button column mx-4 is-large mt-6", btn_color)
+                                onclick = self.link.callback(|_|Msg::PlayButtonPress)
                             >
-                            // TODO: Use start/wait stop icon
-                            // TODO: Change colors
-                            // TODO: Interactivity
-                            {{"Play/Stop"}}
+                            <span class="icon">
+                                <i class=("fas is-large", btn_icon)></i>
+                            </span>
                         </button>
                         </div>
                     </section>
 
                     <div class="card-content">
-                        <div class="columns level">
-                            <p class="column level-item is-one-fifths">
-                                {{"Volume: "}}
-                            </p>
-                            <input
-                                id="volume"
-                                class="slider column level-item is-primary is-large is-four-fifths"
-                                step="1"
-                                min="0"
-                                max="100"
-                                value="50"
-                                type="range"
-                            />
-                        </div>
+                        {self.slider("volume", "Volume", "1", "0", "100", "50")}
+                        {self.slider("pitch", "Pitch", "0.01", "0.5", "2.0", "1.0")}
                     </div>
                 </div>
             </div>
+        }
+    }
+}
+
+impl Model {
+    fn slider(&self, id: &str, name: &str, step: &str, min: &str, max: &str, value: &str) -> Html {
+        html! {
+            <div class="columns level">
+                <p class="column level-item is-one-fifths">
+                    {name}
+                </p>
+                <input
+                    id=id
+                    class="slider column level-item is-large is-four-fifths is-primary"
+                    step=step
+                    min=min
+                    max=max
+                    value=value
+                    type="range"
+                />
+            </div>
+        }
+    }
+
+    fn is_playing(&self) -> bool {
+        match self.state {
+            State::Playing => true,
+            _ => false,
         }
     }
 }

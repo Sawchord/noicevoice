@@ -26,6 +26,7 @@ dependencies = [
  "pasts",
  "pitch",
  "plotters 0.3.0",
+ "wasm-bindgen",
  "wasm-bindgen-futures",
  "wavy",
  "web-sys",
