@@ -1,7 +1,9 @@
 #![recursion_limit = "256"]
+// extern crate wee_alloc;
+// #[global_allocator]
+// static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 mod voice;
-
 use yew::prelude::*;
 
 enum State {

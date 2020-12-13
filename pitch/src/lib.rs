@@ -1,6 +1,12 @@
 // TODO: #4 Fixed Size Frames using own Types
 // TODO: #9 <- (#5) Custom algs
 
+#![no_std]
+
+#[macro_use]
+extern crate alloc;
+use alloc::vec::Vec;
+
 pub mod fft;
 mod frequencer;
 pub use frequencer::Frequencer;
@@ -50,7 +56,7 @@ impl Wavelet {
         let bins = &self.bins;
 
         // Create empty bins
-        let mut new_bins = std::iter::repeat(FrequencyBin {
+        let mut new_bins = core::iter::repeat(FrequencyBin {
             amplitude: 0.0,
             frequency: 0.0,
         })

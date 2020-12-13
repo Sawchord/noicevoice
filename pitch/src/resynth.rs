@@ -1,11 +1,11 @@
-use core::f64::consts::PI;
+use alloc::{collections::VecDeque, vec::Vec};
+use core::{f64::consts::PI, iter::FromIterator};
 use num_complex::Complex64;
-use std::{collections::VecDeque, iter::FromIterator};
 
 use crate::Wavelet;
 
+use alloc::sync::Arc;
 use rustfft::{FFTplanner, FFT};
-use std::sync::Arc;
 
 pub struct Resynth {
    sample_rate: usize,
@@ -37,7 +37,7 @@ impl Resynth {
          freqs_per_bin: sample_rate as f64 / frame_size as f64,
          phase_diff_per_frame: 2.0 * PI * step_size as f64 / frame_size as f64,
          oversampling_rate: frame_size as f64 / step_size as f64,
-         sample_buf: VecDeque::from_iter(std::iter::repeat(0.0).take(frame_size)),
+         sample_buf: VecDeque::from_iter(core::iter::repeat(0.0).take(frame_size)),
          phase_buf: vec![0.0; frame_size],
          ifft: FFTplanner::new(true).plan_fft(frame_size),
          last_wavelet: Wavelet::empty(frame_size / 2),
@@ -93,7 +93,7 @@ impl Resynth {
       //let output = rfft(&output).unwrap();
       // Extend the frame with 0s
       // FIXME: Maybe instead mirror the values?
-      frame.extend(std::iter::repeat(Complex64::zero()).take(self.frame_size / 2));
+      frame.extend(core::iter::repeat(Complex64::zero()).take(self.frame_size / 2));
 
       //let mut frame2 = frame.clone();
       //frame2.extend(frame.iter().rev());
@@ -122,7 +122,7 @@ impl Resynth {
       // extend buffer by stepsize elements
       self
          .sample_buf
-         .extend(std::iter::repeat(0.0).take(self.step_size));
+         .extend(core::iter::repeat(0.0).take(self.step_size));
 
       // accumulate output to buffer
       self

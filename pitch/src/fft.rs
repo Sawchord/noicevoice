@@ -1,6 +1,6 @@
+use alloc::vec::Vec;
+use core::f32::consts::PI;
 use num_complex::Complex32;
-use std::f32;
-use std::f32::consts::PI;
 
 use crate::splat::SplatAccessor;
 

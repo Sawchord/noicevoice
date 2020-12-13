@@ -1,11 +1,9 @@
-use core::f64::consts::PI;
+use alloc::{collections::VecDeque, sync::Arc, vec::Vec};
+use core::{f64::consts::PI, iter::FromIterator};
 use num_complex::Complex64;
-use std::{collections::VecDeque, iter::FromIterator};
+use rustfft::{FFTplanner, FFT};
 
 use crate::{FrequencyBin, Wavelet};
-
-use rustfft::{FFTplanner, FFT};
-use std::sync::Arc;
 
 pub struct Frequencer {
    sample_rate: usize,
@@ -36,7 +34,7 @@ impl Frequencer {
          freqs_per_bin: sample_rate as f64 / frame_size as f64,
          phase_diff_per_frame: 2.0 * PI * step_size as f64 / frame_size as f64,
          oversampling_rate: frame_size as f64 / step_size as f64,
-         sample_buf: VecDeque::from_iter(std::iter::repeat(0.0).take(frame_size)),
+         sample_buf: VecDeque::from_iter(core::iter::repeat(0.0).take(frame_size)),
          phase_buf: vec![0.0; frame_size],
          fft: FFTplanner::new(false).plan_fft(frame_size),
       })
@@ -135,12 +133,13 @@ impl Frequencer {
 #[cfg(test)]
 mod tests {
    use super::*;
+   use alloc::rc::Rc;
+   use core::cell::RefCell;
    use fon::{
       chan::{Ch64, Channel},
       sample::{Sample, Sample1},
       Sink,
    };
-   use std::{cell::RefCell, rc::Rc};
    use twang::Synth;
 
    struct FreqSinkInner {
@@ -196,7 +195,6 @@ mod tests {
          .unwrap()
          .base_freq();
 
-      dbg!(&base_freq);
       assert!(base_freq >= 995.0 && base_freq <= 1005.0);
    }
 }

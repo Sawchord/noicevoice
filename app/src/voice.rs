@@ -1,3 +1,4 @@
+use core::cell::RefCell;
 use core::sync::atomic::{AtomicBool, Ordering};
 use fon::{
    chan::{Ch16, Channel},
@@ -7,7 +8,7 @@ use fon::{
 };
 use pasts::prelude::*;
 use pitch::{Frequencer, Resynth, Wavelet};
-use std::{cell::RefCell, collections::VecDeque};
+use std::collections::VecDeque;
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::future_to_promise;
 use wavy::{Microphone, MicrophoneId, SpeakerId};
