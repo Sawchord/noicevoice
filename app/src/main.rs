@@ -58,27 +58,31 @@ impl Component for Model {
 
     fn view(&self) -> Html {
         let (btn_color, btn_icon) = if self.is_playing() {
-            ("is-danger", "fa-stop-circle")
+            ("is-danger", "fa-stop")
         } else {
-            ("is-success", "fa-play-circle")
+            ("is-success", "fa-play")
         };
 
         html! {
             <div class="container">
                 <div class="card">
                     <section class="hero card-header is-primary">
-                        <div class="hero-body columns">
-                            <div class="container column">
-                            <h1 class="title">
-                                {"NoiseVoice"}
-                            </h1>
-                            <h2 class="subtitle">
-                                {"Experiments involving Rust + WASM/Yew + Audioprocessing"}
-                            </h2>
+                        <div
+                            class="hero-body level columns"
+                            style="justify-content:center"
+                        >
+                            <div class="container level-item column">
+                                <h1 class="title">
+                                    {"NoiseVoice"}
+                                </h1>
+                                <h2 class="subtitle">
+                                    {"Experiments involving Rust + WASM/Yew + Audioprocessing"}
+                                </h2>
                             </div>
                             <button
                                 id="play"
-                                class=("button column mx-4 is-large mt-6", btn_color)
+                                class=("button level-item column is-large", btn_color)
+                                style="display:block; width:100%; justify-content:center;"
                                 onclick = self.link.callback(|_|Msg::PlayButtonPress)
                             >
                             <span class="icon">
@@ -101,17 +105,21 @@ impl Component for Model {
 impl Model {
     fn slider(&self, id: &str, name: &str, step: &str, min: &str, max: &str) -> Html {
         html! {
-            <div class="columns level is-mobile">
-                <p class="column level-item is-one-fifths is-hidden-mobile">
+            <div class="columns level">
+                <p
+                    class="column level-item is-one-fifths"
+                    style="min-width:50px; max-width:100px"
+                >
                     {name}
                 </p>
                 <input
                     id=id
-                    class="slider column level-item is-large is-four-fifths is-primary"
+                    class="slider column level-item is-large is-primary"
                     step=step
                     min=min
                     max=max
                     type="range"
+                    style="display:block; width: 100%;"
                 />
             </div>
         }

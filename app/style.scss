@@ -1,5 +1,11 @@
 $primary: hsl(217, 71%, 53%);
 
-@import "static/bulma/bulma.sass";
-@import "static/bulma-slider/src/sass/index.sass"
+@import "static/bulma/sass/utilities/_all";
+@import "static/bulma/sass/base/_all";
+@import "static/bulma/sass/elements/_all";
+@import "static/bulma/sass/components/_all";
+@import "static/bulma/sass/grid/_all";
+@import "static/bulma/sass/helpers/_all";
+@import "static/bulma/sass/layout/_all";
 
+@import "static/bulma-slider/src/sass/index.sass";
