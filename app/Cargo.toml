@@ -1,9 +1,22 @@
 [package]
 name = "app"
-version = "0.1.0"
+version = "0.0.0"
 authors = ["Leon Tan <leon.arian.tan@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+yew = "0.17.4"
+pitch = { path = "../pitch" }
+pasts = "0.6"
+wavy = "0.6.0"
+fon = "0.2"
+plotters = "0.3.0"
+wasm-bindgen-futures = "0.4.19"
+
+
+[dependencies.web-sys]
+version = "0.3.46"
+default-features = false
+features = [
+    "console",
+]
