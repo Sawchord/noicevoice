@@ -96,10 +96,6 @@ async fn speakers_task(state: &RefCell<State>) {
 async fn start() {
    let microphone = MicrophoneId::default().connect().unwrap();
    let sample_rate = microphone.sample_rate();
-   println!(
-      "Microphone connected, sample rate {}",
-      microphone.sample_rate()
-   );
 
    let state = RefCell::new(State {
       freq: Frequencer::new(sample_rate as usize, 4096, 1024).unwrap(),
