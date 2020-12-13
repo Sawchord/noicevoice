@@ -1,0 +1,6 @@
+[submodule "app/static/bulma"]
+	path = app/static/bulma
+	url = git@github.com:jgthms/bulma.git
+[submodule "app/static/bulma-slider"]
+	path = app/static/bulma-slider
+	url = git@github.com:Wikiki/bulma-slider.git
