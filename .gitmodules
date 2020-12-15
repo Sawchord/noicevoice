@@ -4,3 +4,6 @@
 [submodule "app/static/bulma-slider"]
 	path = app/static/bulma-slider
 	url = git@github.com:Wikiki/bulma-slider.git
+[submodule "app/static/bulma-tooltip"]
+	path = app/static/bulma-tooltip
+	url = git@github.com:Wikiki/bulma-tooltip.git
