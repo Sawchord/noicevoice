@@ -133,7 +133,7 @@ impl Model {
                 </p>
                 <input
                     id=id
-                    class="slider column level-item is-large is-primary"
+                    class="slider column level-item is-primary"
                     step=step
                     min=min
                     max=max
