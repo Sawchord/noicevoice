@@ -14,6 +14,7 @@ use wasm_bindgen_futures::future_to_promise;
 use wavy::{Microphone, MicrophoneId, SpeakerId};
 
 static RUNNING: AtomicBool = AtomicBool::new(false);
+static INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 struct State {
    freq: Frequencer,
@@ -112,6 +113,8 @@ async fn start() {
 }
 
 pub fn init_frequencer() {
+   INITIALIZED.store(true, Ordering::Relaxed);
+
    let promise = async move {
       start().await;
       Ok(JsValue::null())
@@ -120,6 +123,10 @@ pub fn init_frequencer() {
 }
 
 pub fn start_frequencer() {
+   if !INITIALIZED.load(Ordering::Relaxed) {
+      init_frequencer();
+   }
+
    RUNNING.store(true, Ordering::Relaxed);
 }
 

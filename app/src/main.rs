@@ -22,7 +22,7 @@ impl Component for Model {
     type Properties = ();
 
     fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
-        voice::init_frequencer();
+        //voice::init_frequencer();
         Self {
             link,
             state: State::Idle,
@@ -114,17 +114,17 @@ impl Model {
         step: &str,
         min: &str,
         max: &str,
-        tooltip: &str,
+        _tooltip: &str,
     ) -> Html {
         html! {
             <div class="columns level">
-                <button
-                    class="button is-rounded is-light is-small has-tooltip-multiline"
-                    data-tooltip=tooltip
-                    style="width:36px; height:36px;"
-                >
-                    <i class="fas fa-info"></i>
-                </button>
+                //<button
+                //    class="button is-rounded is-light is-small has-tooltip-multiline"
+                //    data-tooltip=tooltip
+                //    style="width:36px; height:36px;"
+                //>
+                //    <i class="fas fa-info"></i>
+                //</button>
                 <p
                     class="column level-item is-one-fifths"
                     style="min-width:50px; max-width:100px"
