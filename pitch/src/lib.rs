@@ -12,6 +12,7 @@ mod frequencer;
 pub use frequencer::Frequencer;
 pub mod resynth;
 pub use resynth::Resynth;
+pub mod notes;
 pub(crate) mod splat;
 
 #[derive(Debug, Clone)]

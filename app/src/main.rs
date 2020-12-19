@@ -22,7 +22,6 @@ impl Component for Model {
     type Properties = ();
 
     fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
-        //voice::init_frequencer();
         Self {
             link,
             state: State::Idle,
@@ -92,6 +91,30 @@ impl Component for Model {
                     </section>
 
                     <div class="card-content">
+                        <div class = "columns level">
+                            <p
+                                class="column level-item is-one-fifths"
+                                style="min-width:50px; max-width:100px"
+                            >
+                                {"Note:"}
+                            </p>
+                            <p
+                                id="note_precision"
+                                class="column level-item is-one-fifths"
+                                style="min-width:50px; max-width:100px"
+                            />
+                            <p
+                                id="note_name"
+                                class="column level-item is-one-fifths"
+                                style="min-width:50px; max-width:100px"
+                            />
+                            <p
+                            id="frequency"
+                            class="column level-item is-one-fifths"
+                            style="min-width:50px; max-width:100px"
+                            />
+                        </div>
+
                         {self.slider("volume", "Volume", "1", "0", "100",
                             "Set the volume of the output. \
                             Be careful to avoid loopbacks."

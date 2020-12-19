@@ -1,5 +1,8 @@
-use core::cell::RefCell;
-use core::sync::atomic::{AtomicBool, Ordering};
+use core::{
+   cell::RefCell,
+   str::FromStr,
+   sync::atomic::{AtomicBool, Ordering},
+};
 use fon::{
    chan::{Ch16, Channel},
    mono::Mono16,
@@ -7,9 +10,12 @@ use fon::{
    Sink, Stream,
 };
 use pasts::prelude::*;
-use pitch::{Frequencer, Resynth, Wavelet};
+use pitch::{
+   notes::{frequency_to_approx_note, Note},
+   Frequencer, Resynth, Wavelet,
+};
 use std::collections::VecDeque;
-use wasm_bindgen::JsValue;
+use wasm_bindgen::{JsCast, JsValue};
 use wasm_bindgen_futures::future_to_promise;
 use wavy::{Microphone, MicrophoneId, SpeakerId};
 
@@ -20,6 +26,8 @@ struct State {
    freq: Frequencer,
    resynth: Resynth,
    wavelets: VecDeque<Wavelet>,
+   freq_avg: RunningAvg,
+   update_counter: usize,
 }
 
 /// Microphone task (record audio).
@@ -44,9 +52,21 @@ async fn microphone_task(state: &RefCell<State>, mut mic: Microphone<Ch16>) {
          // If there is enough data in the buffer we process it into a wavelet
          if buffer.len() >= step_size {
             let mut state = state.borrow_mut();
+            state.update_counter += 1;
 
+            // Skip processing wavelets if we are getting overflowed
             if state.wavelets.len() <= 1000 {
                let mut wv = state.freq.feed_audio(&buffer[..]);
+
+               let freq = wv.base_freq();
+               let freq = state.freq_avg.update(freq);
+
+               if state.update_counter % 20 == 0 {
+                  let note = frequency_to_approx_note(freq);
+                  let (note, _prec) = Note::from_approx(note);
+                  set_text("note_name", &format!("{:?}", note));
+                  set_text("frequency", &format!("{:.2}Hz", freq));
+               }
 
                // Get the pitch shift
                let pitch = get_slider_value("pitch").unwrap_or(1.0);
@@ -62,7 +82,6 @@ async fn microphone_task(state: &RefCell<State>, mut mic: Microphone<Ch16>) {
 
 /// Speakers task (play recorded audio).
 async fn speakers_task(state: &RefCell<State>) {
-   // TODO: Stop
    let mut speakers = SpeakerId::default().connect::<Mono16>().unwrap();
 
    loop {
@@ -86,7 +105,6 @@ async fn speakers_task(state: &RefCell<State>) {
          let volume = get_slider_value("volume").unwrap_or(50.0);
          let gain = 1.0242687596005495f64.powf(volume) - 1.0;
          for s in output.iter() {
-            // TODO: Implement volume
             sink.sink_sample(Sample1::new::<Ch16>((*s * gain).into()));
          }
       }
@@ -102,6 +120,8 @@ async fn start() {
       freq: Frequencer::new(sample_rate as usize, 4096, 1024).unwrap(),
       resynth: Resynth::new(sample_rate as usize, 4096, 1024).unwrap(),
       wavelets: VecDeque::new(),
+      freq_avg: RunningAvg::with_len(20),
+      update_counter: 0,
    });
    // Create speaker and microphone tasks.
    task! {
@@ -136,9 +156,8 @@ pub fn stop_frequencer() {
 
 fn get_slider_value<T>(name: &str) -> Option<T>
 where
-   T: core::str::FromStr,
+   T: FromStr,
 {
-   use wasm_bindgen::JsCast;
    let val = web_sys::window()?
       .document()?
       .get_element_by_id(name)?
@@ -147,4 +166,41 @@ where
       .value();
 
    val.parse().ok()
+}
+
+fn set_text(elem: &str, value: &str) {
+   let val = web_sys::window()
+      .unwrap()
+      .document()
+      .unwrap()
+      .get_element_by_id(elem)
+      .unwrap()
+      .dyn_into::<web_sys::Node>()
+      .unwrap();
+
+   val.set_text_content(Some(value));
+}
+
+struct RunningAvg {
+   len: usize,
+   vals: VecDeque<f64>,
+}
+
+impl RunningAvg {
+   fn with_len(len: usize) -> Self {
+      Self {
+         len,
+         vals: VecDeque::new(),
+      }
+   }
+
+   fn update(&mut self, val: f64) -> f64 {
+      self.vals.push_back(val);
+
+      if self.vals.len() >= self.len {
+         self.vals.pop_front();
+      }
+
+      self.vals.iter().sum::<f64>() / self.len as f64
+   }
 }
