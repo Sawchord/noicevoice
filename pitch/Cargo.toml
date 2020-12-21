@@ -12,7 +12,7 @@ rustfft = "4.0.0"
 [dev-dependencies]
 twang = "0.4.0"
 pasts = "0.6"
-wavy = "0.6.0"
+wavy = "0.7.1"
 fon = "0.2"
 rand = "0.7.3"
 float-cmp = "0.8.0"

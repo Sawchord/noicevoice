@@ -22,7 +22,7 @@ checksum = "33954243bd79057c2de7338850b85983a44588021f8a5fee574a8888c6de4344"
 name = "app"
 version = "0.0.0"
 dependencies = [
- "fon",
+ "fon 0.2.0",
  "pasts",
  "pitch",
  "plotters 0.3.0",
@@ -498,6 +498,12 @@ name = "fon"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5181d86281ce6f4cb944f2bb92690bb3097c144646ef37b96923c06d0f1607d4"
+
+[[package]]
+name = "fon"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d85052c5b5da6fc5d04739192f286741a90da1ce7c814bc1c545d97867cf9d42"
 
 [[package]]
 name = "font-kit"
@@ -1039,7 +1045,7 @@ version = "0.0.0"
 dependencies = [
  "criterion",
  "float-cmp",
- "fon",
+ "fon 0.2.0",
  "itertools",
  "num-complex",
  "pasts",
@@ -1537,7 +1543,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "886485d48123a3df474ef072d6072cde09c5155bbdad3a9c95326430b3057f60"
 dependencies = [
- "fon",
+ "fon 0.2.0",
 ]
 
 [[package]]
@@ -1643,12 +1649,12 @@ checksum = "7e7811dd7f9398f14cc76efd356f98f03aa30419dea46aa810d71e819fc97158"
 
 [[package]]
 name = "wavy"
-version = "0.6.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ffeb6be62fcdd8c775d93989d8b24f8c6a0745396bfbcf018207722d9f8ffa2"
+checksum = "7d53ddd9dd6ad48ded769c295dd37091b8b08ff5b923798d8ec052b940dc17a5"
 dependencies = [
  "dl_api",
- "fon",
+ "fon 0.3.0",
  "smelling_salts",
  "wasm-bindgen",
  "web-sys",
