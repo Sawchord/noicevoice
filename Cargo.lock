@@ -22,7 +22,7 @@ checksum = "33954243bd79057c2de7338850b85983a44588021f8a5fee574a8888c6de4344"
 name = "app"
 version = "0.0.0"
 dependencies = [
- "fon 0.2.0",
+ "fon 0.3.0",
  "pasts",
  "pitch",
  "plotters 0.3.0",
@@ -1065,7 +1065,7 @@ version = "0.0.0"
 dependencies = [
  "criterion",
  "float-cmp",
- "fon 0.2.0",
+ "fon 0.3.0",
  "itertools 0.10.0",
  "num-complex",
  "pasts",
