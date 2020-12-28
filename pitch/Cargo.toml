@@ -7,14 +7,14 @@ edition = "2018"
 [dependencies]
 num-complex = "0.3.1"
 itertools = "0.10.0"
-rustfft = "4.0.0"
+rustfft = "4.1.0"
 
 [dev-dependencies]
 twang = "0.4.0"
 pasts = "0.6"
 wavy = "0.7.1"
 fon = "0.2"
-rand = "0.7.3"
+rand = "0.8.0"
 float-cmp = "0.8.0"
 criterion = "0.3.3"
 plotters = "0.3.0"
