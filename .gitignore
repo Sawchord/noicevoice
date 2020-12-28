@@ -2,3 +2,4 @@
 /pitch/target
 *.png
 *.svg
+*.lock
