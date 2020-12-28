@@ -3,8 +3,7 @@
 use fon::{
    chan::{Ch16, Channel},
    mono::Mono16,
-   sample::{Sample, Sample1},
-   Sink, Stream,
+   Sample, Sink, Stream,
 };
 use pasts::prelude::*;
 use std::{cell::RefCell, collections::VecDeque};
@@ -66,7 +65,7 @@ async fn speakers_task(state: &RefCell<State>) {
       state.resynth.pull_audio(&mut output, wv);
 
       for s in output.iter() {
-         sink.sink_sample(Sample1::new::<Ch16>((*s as f64).into()));
+         sink.sink_sample(Mono16::new::<Ch16>((*s as f64).into()));
       }
    }
 }

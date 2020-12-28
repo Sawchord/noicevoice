@@ -6,8 +6,7 @@ use core::{
 use fon::{
    chan::{Ch16, Channel},
    mono::Mono16,
-   sample::{Sample, Sample1},
-   Sink, Stream,
+   Sample, Sink, Stream,
 };
 use pasts::prelude::*;
 use pitch::{
@@ -105,7 +104,7 @@ async fn speakers_task(state: &RefCell<State>) {
          let volume = get_slider_value("volume").unwrap_or(50.0);
          let gain = 1.0242687596005495f64.powf(volume) - 1.0;
          for s in output.iter() {
-            sink.sink_sample(Sample1::new::<Ch16>((*s * gain).into()));
+            sink.sink_sample(Mono16::new::<Ch16>((*s * gain).into()));
          }
       }
    }

@@ -1,8 +1,4 @@
-use fon::{
-   chan::{Ch64, Channel},
-   sample::{Sample, Sample1},
-   Sink,
-};
+use fon::{chan::Channel, mono::Mono64, Sample, Sink};
 use pitch::{Frequencer, Resynth, Wavelet};
 use plotters::prelude::*;
 use std::{cell::RefCell, rc::Rc};
@@ -21,12 +17,12 @@ struct FreqSinkInner {
 #[derive(Clone)]
 struct FreqSink(Rc<RefCell<FreqSinkInner>>);
 
-impl Sink<Sample1<Ch64>> for FreqSink {
+impl Sink<Mono64> for FreqSink {
    fn sample_rate(&self) -> u32 {
       self.0.borrow().freq.sample_rate() as u32
    }
 
-   fn sink_sample(&mut self, sample: Sample1<Ch64>) {
+   fn sink_sample<Z: Sample>(&mut self, sample: Z) {
       let mut cell = self.0.borrow_mut();
       cell.original.push(sample.channels()[0].to_f64());
       cell.buf.push(sample.channels()[0].to_f64());

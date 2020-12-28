@@ -135,11 +135,7 @@ mod tests {
    use super::*;
    use alloc::rc::Rc;
    use core::cell::RefCell;
-   use fon::{
-      chan::{Ch64, Channel},
-      sample::{Sample, Sample1},
-      Sink,
-   };
+   use fon::{chan::Channel, mono::Mono64, Sample, Sink};
    use twang::Synth;
 
    struct FreqSinkInner {
@@ -152,12 +148,12 @@ mod tests {
    #[derive(Clone)]
    struct FreqSink(Rc<RefCell<FreqSinkInner>>);
 
-   impl Sink<Sample1<Ch64>> for FreqSink {
+   impl Sink<Mono64> for FreqSink {
       fn sample_rate(&self) -> u32 {
          self.0.borrow().freq.sample_rate() as u32
       }
 
-      fn sink_sample(&mut self, sample: Sample1<Ch64>) {
+      fn sink_sample<Z: Sample>(&mut self, sample: Z) {
          let mut cell = self.0.borrow_mut();
          cell.buf.push(sample.channels()[0].to_f64());
          cell.capacity -= 1;
