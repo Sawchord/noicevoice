@@ -3,15 +3,18 @@ use core::{
    str::FromStr,
    sync::atomic::{AtomicBool, Ordering},
 };
+use fon::sample::Sample;
 use fon::{
    chan::{Ch16, Channel},
-   mono::Mono16,
-   Sample, Sink, Stream,
+   stereo::Stereo16,
+   Sink, Stream,
 };
 use pasts::prelude::*;
 use pitch::{
-   notes::{frequency_to_approx_note, Note},
-   Frequencer, Resynth, Wavelet,
+   //notes::{frequency_to_approx_note, Note},
+   Frequencer,
+   Resynth,
+   Wavelet,
 };
 use std::collections::VecDeque;
 use wasm_bindgen::{JsCast, JsValue};
@@ -25,7 +28,7 @@ struct State {
    freq: Frequencer,
    resynth: Resynth,
    wavelets: VecDeque<Wavelet>,
-   freq_avg: RunningAvg,
+   //freq_avg: RunningAvg,
    update_counter: usize,
 }
 
@@ -57,15 +60,15 @@ async fn microphone_task(state: &RefCell<State>, mut mic: Microphone<Ch16>) {
             if state.wavelets.len() <= 1000 {
                let mut wv = state.freq.feed_audio(&buffer[..]);
 
-               let freq = wv.base_freq();
-               let freq = state.freq_avg.update(freq);
+               //let freq = wv.base_freq();
+               //let freq = state.freq_avg.update(freq);
 
-               if state.update_counter % 20 == 0 {
-                  let note = frequency_to_approx_note(freq);
-                  let (note, _prec) = Note::from_approx(note);
-                  set_text("note_name", &format!("{:?}", note));
-                  set_text("frequency", &format!("{:.2}Hz", freq));
-               }
+               // if state.update_counter % 20 == 0 {
+               //    let note = frequency_to_approx_note(freq);
+               //    let (note, _prec) = Note::from_approx(note);
+               //    set_text("note_name", &format!("{:?}", note));
+               //    set_text("frequency", &format!("{:.2}Hz", freq));
+               // }
 
                // Get the pitch shift
                let pitch = get_slider_value("pitch").unwrap_or(1.0);
@@ -81,7 +84,7 @@ async fn microphone_task(state: &RefCell<State>, mut mic: Microphone<Ch16>) {
 
 /// Speakers task (play recorded audio).
 async fn speakers_task(state: &RefCell<State>) {
-   let mut speakers = SpeakerId::default().connect::<Mono16>().unwrap();
+   let mut speakers = SpeakerId::default().connect::<Stereo16>().unwrap();
 
    loop {
       // wait for request
@@ -104,7 +107,10 @@ async fn speakers_task(state: &RefCell<State>) {
          let volume = get_slider_value("volume").unwrap_or(50.0);
          let gain = 1.0242687596005495f64.powf(volume) - 1.0;
          for s in output.iter() {
-            sink.sink_sample(Mono16::new::<Ch16>((*s * gain).into()));
+            sink.sink_sample(Stereo16::new::<Ch16>(
+               (*s * gain).into(),
+               (*s * gain).into(),
+            ));
          }
       }
    }
@@ -119,7 +125,7 @@ async fn start() {
       freq: Frequencer::new(sample_rate as usize, 4096, 1024).unwrap(),
       resynth: Resynth::new(sample_rate as usize, 4096, 1024).unwrap(),
       wavelets: VecDeque::new(),
-      freq_avg: RunningAvg::with_len(20),
+      //freq_avg: RunningAvg::with_len(20),
       update_counter: 0,
    });
    // Create speaker and microphone tasks.
@@ -167,39 +173,39 @@ where
    val.parse().ok()
 }
 
-fn set_text(elem: &str, value: &str) {
-   let val = web_sys::window()
-      .unwrap()
-      .document()
-      .unwrap()
-      .get_element_by_id(elem)
-      .unwrap()
-      .dyn_into::<web_sys::Node>()
-      .unwrap();
+// fn set_text(elem: &str, value: &str) {
+//    let val = web_sys::window()
+//       .unwrap()
+//       .document()
+//       .unwrap()
+//       .get_element_by_id(elem)
+//       .unwrap()
+//       .dyn_into::<web_sys::Node>()
+//       .unwrap();
 
-   val.set_text_content(Some(value));
-}
+//    val.set_text_content(Some(value));
+// }
 
-struct RunningAvg {
-   len: usize,
-   vals: VecDeque<f64>,
-}
+// struct RunningAvg {
+//    len: usize,
+//    vals: VecDeque<f64>,
+// }
 
-impl RunningAvg {
-   fn with_len(len: usize) -> Self {
-      Self {
-         len,
-         vals: VecDeque::new(),
-      }
-   }
+// impl RunningAvg {
+//    fn with_len(len: usize) -> Self {
+//       Self {
+//          len,
+//          vals: VecDeque::new(),
+//       }
+//    }
 
-   fn update(&mut self, val: f64) -> f64 {
-      self.vals.push_back(val);
+//    fn update(&mut self, val: f64) -> f64 {
+//       self.vals.push_back(val);
 
-      if self.vals.len() >= self.len {
-         self.vals.pop_front();
-      }
+//       if self.vals.len() >= self.len {
+//          self.vals.pop_front();
+//       }
 
-      self.vals.iter().sum::<f64>() / self.len as f64
-   }
-}
+//       self.vals.iter().sum::<f64>() / self.len as f64
+//    }
+// }
